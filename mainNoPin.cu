@@ -31,7 +31,7 @@ main( int argc, char* argv[ ] )
   const unsigned long long int bytes = NUMDATA * (long long int) sizeof(LocationPrim);
   const unsigned long long int bytes4euc = ( NUMDATA *  NUMDATA * (long long int)sizeof(float));
   fprintf (stderr, "Amount of data transfered to the device is %lld GB\n", bytes4euc/1000000000);
-  float time = 1.0;
+  //float time = 1.0;
   LocationPrim* locate = new LocationPrim[NUMDATA];
   for (int i = 0; i < NUMDATA; i++) {
       locate[i].x = rand() % 101;
@@ -48,11 +48,8 @@ main( int argc, char* argv[ ] )
   float *distanceBtwAllLocation;
   LocationPrim *cordinateLocation;
   // Allocate memory on host
-  float *HdistanceBtwAllLocation;// = new float[NUMDATA * NUMDATA];
-  
-  cudaMallocHost((void**)&HdistanceBtwAllLocation, bytes4euc); 
-
-
+  float *HdistanceBtwAllLocation = new float[NUMDATA * NUMDATA];
+   
   int BLOCKSIZE = 128;
   int NUMBLOCKS = (NUMDATA + BLOCKSIZE - 1)/BLOCKSIZE;
     
@@ -125,8 +122,9 @@ main( int argc, char* argv[ ] )
   cudaFree( cordinateLocation ); 
   
   // free host memory
-  //delete[] HdistanceBtwAllLocation; 
-  cudaFreeHost(HdistanceBtwAllLocation);
+  delete[] HdistanceBtwAllLocation;
+  
+
    
   /* Running it on CPU************************************/  
   
