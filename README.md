@@ -1,0 +1,3 @@
+RUNTIME COMPARISON BETWEEN GPU(CUDA) AND CPU IMPLEMENTATION OF EUCLIDEAN MATRIX CALCULATION. 
+
+Euclidean matrix has many application in prim algorithms
