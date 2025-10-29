@@ -4,8 +4,11 @@
 #include <cmath>
 #include <string>
 #include <cuda_runtime.h>
+#include <fstream>
 
 #include "PrimAlgorithm.h"
+
+#define IDX2C(i,j,ld) (((i)*(ld))+(j))
 
 using namespace std;
 
@@ -27,10 +30,10 @@ int
 main( int argc, char* argv[ ] )
 { 
   //srand(time(0));
-  unsigned long long int NUMDATA = 60000;
+  unsigned long long int NUMDATA = 20224;
   const unsigned long long int bytes = NUMDATA * (long long int) sizeof(LocationPrim);
   const unsigned long long int bytes4euc = ( NUMDATA *  NUMDATA * (long long int)sizeof(float));
-  fprintf (stderr, "Amount of data transfered to the device is %lld GB\n", bytes4euc/1000000000);
+  fprintf (stderr, "Amount of data transfered to the device is %lld bytes\n", bytes4euc);
   float time = 1.0;
   LocationPrim* locate = new LocationPrim[NUMDATA];
   for (int i = 0; i < NUMDATA; i++) {
@@ -53,7 +56,7 @@ main( int argc, char* argv[ ] )
   cudaMallocHost((void**)&HdistanceBtwAllLocation, bytes4euc); 
 
 
-  int BLOCKSIZE = 128;
+  int BLOCKSIZE = 256;
   int NUMBLOCKS = (NUMDATA + BLOCKSIZE - 1)/BLOCKSIZE;
     
   fprintf (stderr, "NUMBER OF BLOCKS is %d\n", NUMBLOCKS);
@@ -64,9 +67,6 @@ main( int argc, char* argv[ ] )
   cudaEvent_t start, stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
-
-  // Record the start event
-  cudaEventRecord(start, 0); 
 
   cudaError_t status;
   //allocate memory on the GPU device
@@ -91,10 +91,20 @@ main( int argc, char* argv[ ] )
   // allocate number of blocks
   dim3 grid(NUMBLOCKS, 1, 1 );
   
+  
+  // Record the start event
+  cudaEventRecord(start, 0); 
+
+  
   // call the kernel
   euclideanMatrix<<< grid, threads >>>( cordinateLocation, distanceBtwAllLocation,   NUMDATA);
   
   status = cudaDeviceSynchronize( );
+  
+  
+  // Record the stop event
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop); 
   
   checkCudaErrors( status,"euclideanMatrix<<< grid, threads >>>( cordinateLocation, distanceBtwAllLocation,   NUMDATA)");  
  
@@ -107,15 +117,23 @@ main( int argc, char* argv[ ] )
   // checks for cuda errors
   checkCudaErrors( status );
 
-  // Record the stop event
-  cudaEventRecord(stop, 0);
-  cudaEventSynchronize(stop); 
    
   // Calculate elapsed time
   float GpuTime = 0;
   cudaEventElapsedTime(&GpuTime, start, stop); 
-  
    
+  FILE* file = fopen("output.txt", "w");
+  
+  for (int i = 0; i < 1000; i++) {
+      fprintf(file, "x: %.2f , y: %.2f \n", locate[i].x, locate[i].y);      
+         
+  
+  }
+  fclose(file);
+  
+  
+
+
   printf("  GPU time: %f milliseconds\n", GpuTime);
   //printf("  Device to Host bandwidth (GB/s): %f\n", HdistanceBtwAllLocation[NUMDATA*(NUMDATA-1)] / time);
   //printf("  Device to Host bandwidth (GB/s): %f\n", HdistanceBtwAllLocation[NUMDATA-1] / time);
@@ -124,9 +142,6 @@ main( int argc, char* argv[ ] )
   cudaFree( distanceBtwAllLocation );
   cudaFree( cordinateLocation ); 
   
-  // free host memory
-  //delete[] HdistanceBtwAllLocation; 
-  cudaFreeHost(HdistanceBtwAllLocation);
    
   /* Running it on CPU************************************/  
   
@@ -153,11 +168,20 @@ main( int argc, char* argv[ ] )
            }
      }
   }
-    
+
+
+
+
+   
+
   // Record the stop event
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop); 
      
+  
+  
+  
+  
   // Calculate elapsed time
   float CpuTime = 0;
   cudaEventElapsedTime(&CpuTime, start, stop); 
@@ -172,6 +196,50 @@ main( int argc, char* argv[ ] )
   //double check = 99999.000*100000.000;
   //printf("  Device to Host bandwidth (GB/s): %f\n", check);
   
+  /* 
+  FILE* file1 = fopen("result.txt", "w");
+
+  float cpuData;
+  float gpuData;
+  
+  fprintf(stderr, "Checking if the CPU and GPU data are equal \n");      
+  for (int i = 0; i < NUMDATA; i++) {
+      fprintf(file1, "Data%d:  ", i);       
+      for (int j = 0; j < NUMDATA; j++) {
+
+	 cpuData = AllLocationDistance[i][j];
+	 gpuData =  HdistanceBtwAllLocation[IDX2C(i,j,NUMDATA)]; 
+         if ( (powf(gpuData - cpuData, 2.0)) > powf(0.01, 2.0) ) {         
+
+              fprintf(stderr, "row: %d , cols: %d, CPU data: %.2f , GPU data: %.2f are not equal, with difference (%.10f) \n", i, j,cpuData, gpuData, (gpuData - cpuData));      
+         }   
+         fprintf(file1, "%.2f  ", HdistanceBtwAllLocation[IDX2C(i,j,NUMDATA)]);      
+      }
+      fprintf(file1, "\n");
+  
+  }
+  fclose(file1);
+   */
+  FILE* file1 = fopen("mismatch.txt", "w");
+   
+  float cpuData, gpuData; 
+  fprintf(stderr, "Checking if the CPU and GPU data are equal \n");      
+  for (int i = 0; i < NUMDATA; i++) {
+      for (int j = 0; j < NUMDATA; j++) {
+	 cpuData = AllLocationDistance[i][j];
+	 gpuData =  HdistanceBtwAllLocation[IDX2C(i,j,NUMDATA)]; 
+         if ( (powf(gpuData - cpuData, 2.0)) > powf(0.01, 2.0)) {         
+
+              fprintf(file1, "row: %d , cols: %d, CPU data: %.2f , GPU data: %.2f are not equal, with difference (%.10f) \n", i, j,cpuData, gpuData, (gpuData - cpuData));      
+         }   
+      } 
+  }
+  fclose(file1);
+ 
+  
+   
+ 
+ 
   // free host memory
   delete[] locate;
    
@@ -181,7 +249,11 @@ main( int argc, char* argv[ ] )
   }
   
   delete[] AllLocationDistance; 
+  
 
+  // free host memory
+  //delete[] HdistanceBtwAllLocation; 
+  cudaFreeHost(HdistanceBtwAllLocation);
   return 0;
 
 };	
