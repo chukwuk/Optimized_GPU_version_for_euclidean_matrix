@@ -31,7 +31,7 @@ int
 main( int argc, char* argv[ ] )
 { 
   //srand(time(0));
-  size_t NUMDATA = 30336; //30336; //20224;
+  size_t NUMDATA = 30336; //60672 30336; //20224;
   const unsigned long long int bytes = (unsigned long long int) NUMDATA * (long long int) sizeof(LocationPrim);
   const unsigned long long int bytes4euc = ( (unsigned long long int) NUMDATA *  (unsigned long long int) NUMDATA * (long long int)sizeof(float));
   fprintf (stderr, "Amount of data transfered to the device is %lld bytes\n", bytes4euc);
@@ -106,7 +106,7 @@ main( int argc, char* argv[ ] )
   dim3 grid(NUMBLOCKS, 1, 1 );
    
     //int dynSmemSize = 10240;
-    int dynSmemSize = 26408;
+    int dynSmemSize = 26624;
    //int dynSmemSize = 24400;  
   // int dynSmemSize = 48800; 
   //int dynSmemSize = 97600;
@@ -114,7 +114,7 @@ main( int argc, char* argv[ ] )
    
   checkCudaErrors( status," cudaFuncSetAttribute(euclideanMatrixDynamicSharedMemory, cudaFuncAttributeMaxDynamicSharedMemorySize, dynSmemSize); ");  
    
-  int numDataPerThread = (dynSmemSize - (BLOCKSIZE * sizeof(LocationPrim)))/(sizeof(LocationPrim) * BLOCKSIZE);
+  int numDataPerThread = (dynSmemSize - (2 * BLOCKSIZE * sizeof(LocationPrim)))/(sizeof(LocationPrim) * BLOCKSIZE);
 
   
   printf("  Dynamic Memory Size: %d bytes\n", dynSmemSize);
@@ -166,7 +166,7 @@ main( int argc, char* argv[ ] )
    
   /* Running it on CPU************************************/  
   
-  // Allocate memory on host
+  // Allocate memory on host 
   float** AllLocationDistance = new float* [NUMDATA];
   
   for (int i = 0; i < NUMDATA; i++) {
@@ -204,6 +204,7 @@ main( int argc, char* argv[ ] )
   //printf("  Device to Host bandwidth (GB/s): %f\n", bytes4euc*1e-9/time);
   //double check = 99999.000*100000.000;
   //printf("  Device to Host bandwidth (GB/s): %f\n", check);
+  
   /* 
   float cpuData;
   float gpuData; 
@@ -222,7 +223,8 @@ main( int argc, char* argv[ ] )
   */
       
   FILE* file1 = fopen("mismatch.txt", "w");
-   
+
+     
   float cpuData, gpuData; 
   fprintf(stderr, "Checking if the CPU and GPU data are equal \n");      
   for (int i = 0; i < NUMDATA; i++) {
@@ -246,7 +248,7 @@ main( int argc, char* argv[ ] )
   // free host memory
   delete[] locate;
    
-    
+      
   for (int i = 0; i < NUMDATA; i++) {
      delete[] AllLocationDistance[i]; 
   }

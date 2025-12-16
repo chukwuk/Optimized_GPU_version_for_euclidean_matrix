@@ -31,7 +31,7 @@ int
 main( int argc, char* argv[ ] )
 { 
   //srand(time(0));
-  size_t NUMDATA = 30336; //30336; //20224;
+  size_t NUMDATA = 30336; // 60672 30336; //20224;
   const unsigned long long int bytes = (unsigned long long int) NUMDATA * (long long int) sizeof(LocationPrim);
   const unsigned long long int bytes4euc = ( (unsigned long long int) NUMDATA *  (unsigned long long int) NUMDATA * (long long int)sizeof(float));
   fprintf (stderr, "Amount of data transfered to the device is %lld bytes\n", bytes4euc);
@@ -167,6 +167,7 @@ main( int argc, char* argv[ ] )
   /* Running it on CPU************************************/  
   
   // Allocate memory on host
+  
   float** AllLocationDistance = new float* [NUMDATA];
   
   for (int i = 0; i < NUMDATA; i++) {
@@ -204,6 +205,7 @@ main( int argc, char* argv[ ] )
   //printf("  Device to Host bandwidth (GB/s): %f\n", bytes4euc*1e-9/time);
   //double check = 99999.000*100000.000;
   //printf("  Device to Host bandwidth (GB/s): %f\n", check);
+  
   /* 
   float cpuData;
   float gpuData; 
@@ -220,7 +222,7 @@ main( int argc, char* argv[ ] )
   
   }
   */
-      
+     
   FILE* file1 = fopen("mismatch.txt", "w");
    
   float cpuData, gpuData; 
@@ -236,7 +238,7 @@ main( int argc, char* argv[ ] )
       } 
   }
   fclose(file1);
- 
+  
 
     
   // free host memory

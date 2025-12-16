@@ -118,25 +118,41 @@ __global__  void euclideanMatrixStaticSharedMemory(LocationPrim *cordinates, flo
 }
 
 
+__device__ size_t divFaster (size_t t, size_t dataFetchSize, size_t z)
+  {
+   if (z >= ((t + 1) * dataFetchSize)) {
+        t = t + 1;
+   }
+   return t;
+ }
+
+__device__ size_t divFast (size_t t, size_t dataFetchSize, size_t z)
+  {
+   while (z >= ((t + 1) * dataFetchSize)) {
+        t = t + 1;
+   }
+   return t;
+ }
+
+
+__device__ size_t divFunc (size_t t, size_t dataFetchSize, size_t z)
+{
+   return (z/dataFetchSize);
+}
+
+
+
 
 __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, float* euclideanDistance, size_t NUMDATA, int numDataPerThread) {
-    
-   size_t gid_start = (size_t) blockIdx.x * (size_t) blockDim.x;
-    
-   size_t gid = (size_t) blockIdx.x * (size_t) blockDim.x + threadIdx.x;
-
+   size_t gid_start =  blockIdx.x * blockDim.x;
+   size_t gid =  gid_start + threadIdx.x;
    extern  __shared__ LocationPrim locations [];
-   //__shared__ LocationPrim ref[256];
-
    int blocksize = blockDim.x * blockDim.y * blockDim.z;      
-   
-    
    size_t numofDataperBatch = (numDataPerThread) * blocksize;
+   size_t numRef =  numofDataperBatch + blocksize; // ((numDataPerThread+1) * blocksize);
    auto numBatchToFetch = [&](int batchfetched) -> int {	   
-     return ((NUMDATA - batchfetched) >= numofDataperBatch) ? numofDataperBatch : (NUMDATA - batchfetched);
+     return ((NUMDATA - batchfetched) >= (numofDataperBatch + blocksize)) ? numofDataperBatch : (NUMDATA - batchfetched);
    };
-   //float ref_x, ref_y;
-      
    size_t index;
    size_t real_gid;
    size_t t = 0;
@@ -146,36 +162,26 @@ __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, fl
    size_t d; 
    size_t dataFetchSize;  	  
    size_t threadId = threadIdx.x;
-   size_t totalDataCompute; 
+   size_t totalDataCompute;
    if (gid < NUMDATA) {
-      //ref[threadIdx.x] = cordinates[gid];
-       locations[numofDataperBatch + threadId] = cordinates[gid];    
- 
+       locations[numRef + threadId] = cordinates[gid];    
    } 
-    
    for (int i = 0; i < NUMDATA; i+=numBatchToFetch(i)) {
-
        dataFetchSize = numBatchToFetch(i);  	  
        for (size_t n = threadId, m = i + threadId; n < dataFetchSize; n+=blocksize, m+= blocksize) {
            //locations[n] = cordinates[m];
 	   __pipeline_memcpy_async(&locations[n], &cordinates[m], sizeof(LocationPrim));
        } 
-       __pipeline_commit();
-       __pipeline_wait_prior(0);
-       //__syncthreads();
-       
+        __pipeline_commit();
+        __pipeline_wait_prior(0);
+        __syncthreads();
        t = 0;
-       totalDataCompute = dataFetchSize*blocksize;       
-       //count = threadIdx.x;
+       totalDataCompute = dataFetchSize*blocksize;
        for (size_t z = threadId, c = i + threadId; z < totalDataCompute; z+=blocksize, c+=blocksize)  {
-           
-	        
-	  if (z >= ((t + 1) * dataFetchSize)) {
-             t = t + 1;
-          }
-          
-          real_gid =  t + gid_start;
-	   
+          if (z >= ((t + 1) * dataFetchSize)) {
+               t = t + 1;
+          } 
+          real_gid =  t + gid_start; 
           if (real_gid >= NUMDATA) {
             continue;
           }
@@ -183,11 +189,7 @@ __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, fl
           k = c - dataSub; 
           index = real_gid*NUMDATA;
           d = z - dataSub;
-	  ref_index = numofDataperBatch + t;  
-          //float x_co =  (cordinates[real_gid].x - locations[d].x);
-          //float y_co =  (cordinates[real_gid].y - locations[d].y);
-          //float x_co =  (ref[t].x - locations[d].x);
-          //float y_co =  (ref[t].y - locations[d].y);
+	  ref_index = numRef + t;  
           float x_co =  (locations[ref_index].x - locations[d].x);
           float y_co =  (locations[ref_index].y - locations[d].y);
 	  float pow_xco = x_co * x_co;
@@ -195,10 +197,7 @@ __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, fl
           float pow_plus = sqrt(pow_yco+pow_xco);
           euclideanDistance[index+k] = pow_plus;
        }  
-      __syncthreads();
-	 
-      }
- 
-    
+      __syncthreads();	 
+   }
 }
 

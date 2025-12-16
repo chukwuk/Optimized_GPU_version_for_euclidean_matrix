@@ -121,21 +121,14 @@ __global__  void euclideanMatrixStaticSharedMemory(LocationPrim *cordinates, flo
 
 __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, float* euclideanDistance, size_t NUMDATA, int numDataPerThread) {
     
-   size_t gid_start = (size_t) blockIdx.x * (size_t) blockDim.x;
-    
-   size_t gid = (size_t) blockIdx.x * (size_t) blockDim.x + threadIdx.x;
-
+   size_t gid_start =  blockIdx.x *  blockDim.x;
+   size_t gid =  blockIdx.x * blockDim.x + threadIdx.x;
    extern  __shared__ LocationPrim locations [];
-   //__shared__ LocationPrim ref[256];
-
-   int blocksize = blockDim.x * blockDim.y * blockDim.z;      
-   
-    
+   int blocksize = blockDim.x * blockDim.y * blockDim.z;       
    size_t numofDataperBatch = (numDataPerThread) * blocksize;
    auto numBatchToFetch = [&](int batchfetched) -> int {	   
      return ((NUMDATA - batchfetched) >= numofDataperBatch) ? numofDataperBatch : (NUMDATA - batchfetched);
    };
-   //float ref_x, ref_y;
       
    size_t index;
    size_t real_gid;
@@ -148,7 +141,6 @@ __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, fl
    size_t threadId = threadIdx.x;
    size_t totalDataCompute; 
    if (gid < NUMDATA) {
-      //ref[threadIdx.x] = cordinates[gid];
        locations[numofDataperBatch + threadId] = cordinates[gid];    
  
    } 
@@ -162,11 +154,9 @@ __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, fl
        } 
        __pipeline_commit();
        __pipeline_wait_prior(0);
-       //__syncthreads();
-       
+       __syncthreads();     
        t = 0;
        totalDataCompute = dataFetchSize*blocksize;       
-       //count = threadIdx.x;
        for (size_t z = threadId, c = i + threadId; z < totalDataCompute; z+=blocksize, c+=blocksize)  {
            
 	  t  = z/dataFetchSize;
@@ -181,10 +171,6 @@ __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, fl
           index = real_gid*NUMDATA;
           d = z - dataSub;
 	  ref_index = numofDataperBatch + t;  
-          //float x_co =  (cordinates[real_gid].x - locations[d].x);
-          //float y_co =  (cordinates[real_gid].y - locations[d].y);
-          //float x_co =  (ref[t].x - locations[d].x);
-          //float y_co =  (ref[t].y - locations[d].y);
           float x_co =  (locations[ref_index].x - locations[d].x);
           float y_co =  (locations[ref_index].y - locations[d].y);
 	  float pow_xco = x_co * x_co;
@@ -195,7 +181,6 @@ __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, fl
       __syncthreads();
 	 
       }
- 
-    
+
 }
 
