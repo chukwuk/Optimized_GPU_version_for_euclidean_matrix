@@ -178,12 +178,9 @@ __global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, fl
        t = 0;
        totalDataCompute = dataFetchSize*blocksize;
        for (size_t z = threadId, c = i + threadId; z < totalDataCompute; z+=blocksize, c+=blocksize)  {
-          t  = z/dataFetchSize;
-	  /*
 	  if (z >= ((t + 1) * dataFetchSize)) {
                t = t + 1;
           } 
-	  */
           real_gid =  t + gid_start; 
           if (real_gid >= NUMDATA) {
             continue;
