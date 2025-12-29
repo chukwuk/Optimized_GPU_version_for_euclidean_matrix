@@ -61,7 +61,7 @@ main( int argc, char* argv[ ] )
   int MINGRIDSIZE;
 
   cudaOccupancyMaxPotentialBlockSize( &MINGRIDSIZE, &BLOCKSIZE, 
-                                      euclideanMatrix, 0, 0); 
+                                      euclideanMatrixDynamicSharedMemory, 0, 0); 
   
   
   
@@ -167,7 +167,7 @@ main( int argc, char* argv[ ] )
   
    
   /* Running it on CPU************************************/  
-  /*
+  
   // Allocate memory on host
   float** AllLocationDistance = new float* [NUMDATA];
   
@@ -206,7 +206,7 @@ main( int argc, char* argv[ ] )
   //printf("  Device to Host bandwidth (GB/s): %f\n", bytes4euc*1e-9/time);
   //double check = 99999.000*100000.000;
   //printf("  Device to Host bandwidth (GB/s): %f\n", check);
-  */
+ 
   /* 
   float cpuData;
   float gpuData; 
@@ -225,7 +225,7 @@ main( int argc, char* argv[ ] )
   */
       
   FILE* file1 = fopen("mismatch.txt", "w");
-  /* 
+   
   float cpuData, gpuData; 
   fprintf(stderr, "Checking if the CPU and GPU data are equal \n");      
   for (int i = 0; i < NUMDATA; i++) {
@@ -239,7 +239,7 @@ main( int argc, char* argv[ ] )
       } 
   }
   fclose(file1);
-  */
+  
 
     
   // free host memory
@@ -250,9 +250,9 @@ main( int argc, char* argv[ ] )
   delete[] locate;
    
     
-  //for (int i = 0; i < NUMDATA; i++) {
-   //  delete[] AllLocationDistance[i]; 
- // }
+   for (int i = 0; i < NUMDATA; i++) {
+     delete[] AllLocationDistance[i]; 
+   }
   
   //delete[] AllLocationDistance; 
   
