@@ -6,12 +6,26 @@
 #include <cuda_runtime.h>
 #include <fstream>
 
-#include "PrimAlgorithm.h"
 
 #define IDX2C(i,j,ld) (((i)*(ld))+(j))
 
+#define FAKE_BLOCKSIZE 64
 
 using namespace std;
+
+// the graph class
+struct LocationPrim {
+      float x;
+      float y;
+
+};
+
+
+
+#include "PrimAlgorithm.cuh"
+
+
+
 
 inline
 cudaError_t checkCudaErrors(cudaError_t result, string functioncall = "")
@@ -31,7 +45,7 @@ int
 main( int argc, char* argv[ ] )
 { 
   //srand(time(0));
-  size_t NUMDATA = 30336; //60672 30336; //20224;
+  size_t NUMDATA = 30336; //60672 30336; 30464 //20224;
   const unsigned long long int bytes = (unsigned long long int) NUMDATA * (long long int) sizeof(LocationPrim);
   const unsigned long long int bytes4euc = ( (unsigned long long int) NUMDATA *  (unsigned long long int) NUMDATA * (long long int)sizeof(float));
   fprintf (stderr, "Amount of data transfered to the device is %lld bytes\n", bytes4euc);
@@ -61,14 +75,16 @@ main( int argc, char* argv[ ] )
   int MINGRIDSIZE;
 
   cudaOccupancyMaxPotentialBlockSize( &MINGRIDSIZE, &BLOCKSIZE, 
-                                      euclideanMatrix, 0, 0); 
+                                      euclideanMatrixDynamicSharedMemory, 0, 0); 
   
   
   
   BLOCKSIZE = 256; 
+  
+  //const int FAKE_BLOCKSIZE = 16;
    
  
-  int NUMBLOCKS = (NUMDATA + BLOCKSIZE - 1)/BLOCKSIZE;
+  int NUMBLOCKS = (NUMDATA + FAKE_BLOCKSIZE - 1)/FAKE_BLOCKSIZE;
     
   
   fprintf (stderr, "BLOCKSIZE is %d\n", BLOCKSIZE);
@@ -165,7 +181,7 @@ main( int argc, char* argv[ ] )
   
    
   /* Running it on CPU************************************/  
-  
+  /* 
   // Allocate memory on host 
   float** AllLocationDistance = new float* [NUMDATA];
   
@@ -201,10 +217,11 @@ main( int argc, char* argv[ ] )
   cudaEventDestroy(stop);
   
   printf("  CPU time: %f milliseconds\n", CpuTime);
+  
   //printf("  Device to Host bandwidth (GB/s): %f\n", bytes4euc*1e-9/time);
   //double check = 99999.000*100000.000;
   //printf("  Device to Host bandwidth (GB/s): %f\n", check);
-  
+  */
   /* 
   float cpuData;
   float gpuData; 
@@ -221,7 +238,8 @@ main( int argc, char* argv[ ] )
   
   }
   */
-      
+  
+  /*
   FILE* file1 = fopen("mismatch.txt", "w");
 
      
@@ -238,7 +256,7 @@ main( int argc, char* argv[ ] )
       } 
   }
   fclose(file1);
- 
+  */
 
     
   // free host memory
@@ -248,13 +266,13 @@ main( int argc, char* argv[ ] )
   // free host memory
   delete[] locate;
    
-      
+  /*      
   for (int i = 0; i < NUMDATA; i++) {
      delete[] AllLocationDistance[i]; 
   }
   
   delete[] AllLocationDistance; 
-  
+  */
   return 0;
 
 };	

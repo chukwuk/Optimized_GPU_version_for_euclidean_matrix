@@ -1,17 +1,9 @@
-CC=nvcc
+CC=nvcc --maxrregcount=255 
 
-all: euclideanMatrix euclideanMatrixNoPin 
+all: main
 
-euclideanMatrix: main.cu PrimAlgorithm.o
-	$(CC) PrimAlgorithm.o main.cu -o euclideanMatrix
-
-euclideanMatrixNoPin: mainNoPin.cu PrimAlgorithm.o
-	$(CC) PrimAlgorithm.o mainNoPin.cu -o euclideanMatrixNoPin
-
-PrimAlgorithm.o: PrimAlgorithm.cu PrimAlgorithm.h
-	$(CC) -c PrimAlgorithm.cu -o PrimAlgorithm.o
-
+main: main.cu 
+	$(CC) main.cu -o euclideanMatrix
 
 clean:
-	rm -f euclideanMatrix euclideanMatrixNoPin PrimAlgorithm.o
-
+	rm -f euclideanMatrix

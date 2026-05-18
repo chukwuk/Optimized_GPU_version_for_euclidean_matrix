@@ -14,7 +14,7 @@ struct LocationPrim {
 
 __global__  void euclideanMatrix(LocationPrim *cordinates, float* euclideanDistance, size_t NUMDATA);
 
-__global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, float* euclideanDistance, size_t NUMDATA, int numDataPerThread);
+__global__  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, float* euclideanDistance, size_t NUMDATA, int numDataPerThread, const int FAKE_BLOCKSIZE);
 
 __global__  void euclideanMatrixStaticSharedMemory(LocationPrim *cordinates, float* euclideanDistance, size_t NUMDATA, int blocksize);
 #endif

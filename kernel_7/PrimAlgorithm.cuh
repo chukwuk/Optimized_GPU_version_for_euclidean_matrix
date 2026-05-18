@@ -1,15 +1,12 @@
 #include <math.h>
-#include "PrimAlgorithm.h"    
 #include <stdio.h>
 #include <cooperative_groups/memcpy_async.h>
 #include <cuda/pipeline>
 
-using namespace std;
+//using namespace std;
 
 
-__global__  
-  __launch_bounds__(256, 1)
-  void euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, float* euclideanDistance, size_t NUMDATA, int numDataPerThread, const int FAKE_BLOCKSIZE) {
+__global__ void __launch_bounds__(256, 1) euclideanMatrixDynamicSharedMemory(LocationPrim *cordinates, float* euclideanDistance, size_t NUMDATA, int numDataPerThread) {
    //size_t gid_start =  blockIdx.x * blockDim.x;
    size_t gid_start = blockIdx.x * FAKE_BLOCKSIZE; 
    size_t gid =  gid_start + threadIdx.x;
