@@ -181,7 +181,7 @@ main( int argc, char* argv[ ] )
   
    
   /* Running it on CPU************************************/  
-  /* 
+  /*   
   // Allocate memory on host 
   float** AllLocationDistance = new float* [NUMDATA];
   
@@ -266,7 +266,7 @@ main( int argc, char* argv[ ] )
   // free host memory
   delete[] locate;
    
-  /*      
+   /*     
   for (int i = 0; i < NUMDATA; i++) {
      delete[] AllLocationDistance[i]; 
   }

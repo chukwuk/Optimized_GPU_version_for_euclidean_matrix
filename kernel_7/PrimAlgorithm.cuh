@@ -24,19 +24,19 @@ __global__ void __launch_bounds__(256, 1) euclideanMatrixDynamicSharedMemory(Loc
    size_t dataFetchSize;  	  
    size_t threadId = threadIdx.x;
    size_t totalDataCompute;
-   //if (threadId < FAKE_BLOCKSIZE) {
+   if (threadId < FAKE_BLOCKSIZE) {
        locations[numRef + threadId] = cordinates[gid];    
-  // }
- //  __syncthreads(); 
+   }
+   __syncthreads(); 
    float ref_x[FAKE_BLOCKSIZE];
    float ref_y[FAKE_BLOCKSIZE];
-   /*
+   
    #pragma unroll
    for (int i = 0; i < 64; i++) {
        ref_x[i] = locations[numRef + i].x;
        ref_y[i] = locations[numRef + i].y;
    }
-   */
+   
    for (int i = 0; i < NUMDATA; i+=numBatchToFetch(i)) {
        dataFetchSize = numBatchToFetch(i);  	  
        for (size_t n = threadId, m = i + threadId; n < dataFetchSize; n+=blocksize, m+= blocksize) {
@@ -45,7 +45,8 @@ __global__ void __launch_bounds__(256, 1) euclideanMatrixDynamicSharedMemory(Loc
        } 
         __pipeline_commit();
         __pipeline_wait_prior(0);
-	
+        __syncthreads();
+        /*     
        if (i == 0) {
           #pragma unroll
           for (int r = 0; r < FAKE_BLOCKSIZE; r++) {
@@ -53,7 +54,7 @@ __global__ void __launch_bounds__(256, 1) euclideanMatrixDynamicSharedMemory(Loc
              ref_y[r] = locations[numRef + r].y;
           }
        }
-        __syncthreads();
+       */
        totalDataCompute = dataFetchSize;
        for (size_t z = threadId, c = i + threadId; z < totalDataCompute; z+=blocksize, c+=blocksize)  {
 	  float cal_x = locations[z].x;  
